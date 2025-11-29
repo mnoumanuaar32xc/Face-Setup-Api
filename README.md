@@ -1,4 +1,7 @@
 # Face-Setup-Api
+# Object 1
+# this is a samll project which we implement Fast API for upload , delete and get all images and store in Fassi Vector DB. and create a MVC .net Core Application for Upload and read the text from images
+
 
 # step-by-step guide to create a FastAPI project named Fase_setup_Api inside your folder:
 
