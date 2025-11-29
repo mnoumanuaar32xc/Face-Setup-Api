@@ -232,6 +232,35 @@ def search(query: str, top_k: int = 3):
             })
 
     return results
+# 🟦 Step 3: Create FastAPI router
+
+Create file:
+
+app/routers/vector_faiss_router.py
+
+Add:
+
+from fastapi import APIRouter
+from app.services.vector_faiss import add_document, search
+
+router = APIRouter(prefix="/faiss", tags=["FAISS Vector DB"])
+
+@router.post("/add")
+def add_doc(text: str):
+    return add_document(text)
+
+@router.get("/search")
+def search_doc(query: str, top_k: int = 3):
+    return search(query, top_k)
+
+#  🟦 Step 4: Include the FAISS router in main.py
+
+In your app/main.py:
+from app.routers import vector_faiss_router
+app.include_router(vector_faiss_router.router)
+
+# 🟦 Step 5: Run FastAPI
+uvicorn app.main:app --reload
 
 
 
