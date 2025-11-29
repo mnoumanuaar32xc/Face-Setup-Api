@@ -403,3 +403,151 @@ public async Task<IActionResult> Upload(IFormFile imageFile)
     }
 }
 
+####################################################################################
+
+# ✅ 2. Show the extracted text on the MVC page
+
+This means you need:
+
+✔ FastAPI OCR endpoint
+✔ Python OCR logic
+✔ MVC call to retrieve OCR result and display it
+✔ UI box to show OCR text
+
+🧠 STEP 1 — Install OCR library in FastAPI
+
+Run in VS Code terminal:
+
+pip install pytesseract pillow
+
+
+Install Tesseract OCR engine (required):
+
+🔸 Windows installer:
+
+Download from here:
+https://github.com/UB-Mannheim/tesseract/wiki
+
+Install it.
+
+Then add path in your Python code:
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+Then add path in your Python code:
+
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+🧠 STEP 2 — Update ImageProcessing.py (Add OCR)
+
+Add this inside ImageProcessing:
+
+import pytesseract
+
+# Add Tesseract path
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
+
+class ImageProcessing:
+
+    @staticmethod
+    def extract_text(file_bytes: bytes):
+        img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+        text = pytesseract.image_to_string(img)
+        return text
+
+🧠 STEP 3 — Modify upload endpoint to return OCR text
+app/routers/image_router.py
+from fastapi import APIRouter, UploadFile, File
+from app.services.ImageProcessing import ImageProcessing
+
+router = APIRouter(prefix="/image", tags=["Image Processing"])
+
+@router.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    file_bytes = await file.read()
+
+    # Save image in FAISS
+    result = ImageProcessing.add_image(file_bytes)
+
+    # Extract text using OCR
+    text = ImageProcessing.extract_text(file_bytes)
+
+    return {
+        "id": result["id"],
+        "message": result["message"],
+        "extracted_text": text
+    }
+
+🧠 STEP 4 — Modify MVC Upload to show OCR text
+HomeController.cs
+[HttpPost]
+public async Task<IActionResult> Upload(IFormFile imageFile)
+{
+    if (imageFile == null || imageFile.Length == 0)
+        return Content("No file selected.");
+
+    using (var client = new HttpClient())
+    {
+        var form = new MultipartFormDataContent();
+        var streamContent = new StreamContent(imageFile.OpenReadStream());
+        form.Add(streamContent, "file", imageFile.FileName);
+
+        var response = await client.PostAsync("http://127.0.0.1:8000/image/upload", form);
+
+        var result = await response.Content.ReadAsStringAsync();
+
+        return Content(result); // return JSON
+    }
+}
+
+🧠 STEP 5 — Show extracted text on MVC UI
+
+Modify your JavaScript:
+
+$("#uploadBtn").click(function () {
+    var fileInput = $("#imageFile")[0].files[0];
+    if (!fileInput) {
+        $("#response").text("Please select an image.");
+        return;
+    }
+
+    var formData = new FormData();
+    formData.append("imageFile", fileInput);
+
+    $.ajax({
+        url: "/Home/Upload",
+        type: "POST",
+        contentType: false,
+        processData: false,
+        data: formData,
+        success: function (result) {
+            let data = JSON.parse(result);
+            $("#response").html(`
+                <strong>Uploaded Successfully!</strong><br/>
+                <b>OCR Extracted Text:</b><br/>
+                <pre style="white-space: pre-wrap; background:#f0f0f0; padding:10px;">
+${data.extracted_text}
+                </pre>
+            `);
+        }
+    });
+});
+
+🧠 STEP 6 — Add text box on page
+
+Add in your Index.cshtml:
+
+<h3>Extracted Text:</h3>
+<div id="response" style="white-space:pre-wrap; background:#f7f7f7; padding:10px;"></div>
+
+🎉 FINAL RESULT
+
+✔ When user uploads image
+✔ FastAPI extracts text using OCR
+✔ MVC receives OCR text
+✔ Text is shown under the image upload section
+
+Exactly what you want!
+
+
+
+Install Tesseract OCR engine (required):
