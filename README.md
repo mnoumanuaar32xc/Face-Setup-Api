@@ -362,4 +362,44 @@ def get_all_images():
     return ImageProcessing.get_all_images()
 
 
+📁 3. Update your main.py
+
+Replace your router imports and include:
+
+from fastapi import FastAPI
+from app.routers import sample_router, vector_faiss_router, image_router
+
+app = FastAPI(
+    title="Fase Setup API",
+    version="1.0.0"
+)
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to Fase Setup API"}
+
+# include your routers
+app.include_router(sample_router.router)
+app.include_router(vector_faiss_router.router)
+app.include_router(image_router.router)
+
+
+# 📱 4. MVC Upload Code (ASP.NET)
+
+Use this to send image → your FastAPI endpoint.
+
+public async Task<IActionResult> Upload(IFormFile imageFile)
+{
+    using (var client = new HttpClient())
+    {
+        var form = new MultipartFormDataContent();
+        var stream = imageFile.OpenReadStream();
+        form.Add(new StreamContent(stream), "file", imageFile.FileName);
+
+        var response = await client.PostAsync("http://127.0.0.1:8000/image/upload", form);
+        var result = await response.Content.ReadAsStringAsync();
+
+        return Content(result);
+    }
+}
 
