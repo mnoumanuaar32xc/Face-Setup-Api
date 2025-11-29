@@ -59,6 +59,60 @@ pip freeze > requirements.txt
 app/main.py
 Add this code:
 
+from fastapi import FastAPI
+from app.routers import sample_router
 
+app = FastAPI(
+    title="Fase Setup API",
+    version="1.0.0"
+)
+
+@app.get("/")
+def root():
+    return {"message": "Welcome to Fase Setup API"}
+
+app.include_router(sample_router.router)
+
+
+
+# ✅ Step-by-Step: Create a Router
+
+Create file:
+app/routers/sample_router.py
+
+Add this:
+from fastapi import APIRouter
+
+router = APIRouter(
+    prefix="/sample",
+    tags=["Sample Routes"]
+)
+
+@router.get("/")
+def sample_data():
+    return {"info": "This is a sample router from Fase Setup API"}
+
+
+# ✅ Step-by-Step: Create a Sample Model (Optional)
+
+Create file:
+app/models/sample_model.py
+
+Add:
+
+from pydantic import BaseModel
+
+class SampleItem(BaseModel):
+    name: str
+    age: int
+
+
+
+
+# ✅ 6. Run Your API
+
+From terminal:
+
+uvicorn app.main:app --reload
 
 
