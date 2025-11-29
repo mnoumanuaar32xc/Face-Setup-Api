@@ -105,14 +105,23 @@ from pydantic import BaseModel
 class SampleItem(BaseModel):
     name: str
     age: int
-
-
-
-
+ 
 # ✅ 6. Run Your API
 
 From terminal:
 
 uvicorn app.main:app --reload
+
+
+# After running, open these URLs:
+
+✔ API Root
+
+http://127.0.0.1:8000/
+
+✔ Swagger Docs (API UI)
+
+http://127.0.0.1:8000/docs
+
 
 
