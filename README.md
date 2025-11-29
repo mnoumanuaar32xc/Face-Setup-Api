@@ -262,5 +262,104 @@ app.include_router(vector_faiss_router.router)
 # 🟦 Step 5: Run FastAPI
 uvicorn app.main:app --reload
 
+# Examples to Test
+➤ Add a document
+POST http://127.0.0.1:8000/faiss/add?text=This is my first document
+
+➤ Search the vector database
+
+
+############################################################
+
+Below is a complete and clean FastAPI setup for your requirement:
+
+✅ Create a new ImageProcessing.py service class
+✅ Create new FastAPI endpoints in your router & main.py
+✅ Accept an uploaded image from your MVC app
+✅ Convert image → embedding
+✅ Store it inside FAISS vector DB
+✅ Provide an API to retrieve all stored images
+
+📁 1. Create new file
+
+app/services/ImageProcessing.py
+
+Copy–paste the FULL working implementation:
+
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
+from PIL import Image
+import io
+import base64
+
+# Load image embedding model
+model = SentenceTransformer("clip-ViT-B-32")
+
+# FAISS index
+embedding_dim = 512  # CLIP ViT-B-32 output size
+index = faiss.IndexFlatL2(embedding_dim)
+
+# Store metadata (image bytes)
+images_store = []
+
+
+class ImageProcessing:
+
+    @staticmethod
+    def add_image(file_bytes: bytes):
+        global images_store, index
+
+        # Load image
+        img = Image.open(io.BytesIO(file_bytes)).convert("RGB")
+
+        # Compute embedding
+        embedding = model.encode([img], convert_to_tensor=False)
+        embedding = np.array(embedding).astype("float32")
+
+        # Store image
+        img_id = len(images_store)
+        images_store.append(file_bytes)
+
+        # Add vector to index
+        index.add(embedding)
+
+        return {
+            "id": img_id,
+            "message": "Image stored successfully"
+        }
+
+    @staticmethod
+    def get_all_images():
+        result = []
+        for i, img_bytes in enumerate(images_store):
+            # encode image in Base64 for returning in JSON
+            base64_img = base64.b64encode(img_bytes).decode("utf-8")
+            result.append({
+                "id": i,
+                "image_base64": base64_img
+            })
+        return result
+
+        📁 2. Create router file
+
+app/routers/image_router.py
+
+from fastapi import APIRouter, UploadFile, File
+from app.services.ImageProcessing import ImageProcessing
+
+router = APIRouter(prefix="/image", tags=["Image Processing"])
+
+
+@router.post("/upload")
+async def upload_image(file: UploadFile = File(...)):
+    file_bytes = await file.read()
+    return ImageProcessing.add_image(file_bytes)
+
+
+@router.get("/all")
+def get_all_images():
+    return ImageProcessing.get_all_images()
+
 
 
