@@ -184,3 +184,54 @@ FAISS comes in two versions:
 
 1️⃣ CPU version (works on all machines — Windows/Linux/macOS)
 pip install faiss-cpu
+# Step 1: Install FAISS + embeddings
+
+Run this in your virtual environment:
+pip install faiss-cpu sentence-transformers numpy
+
+# Step 2: Create FAISS service file
+
+Create:
+app/services/vector_faiss.py
+
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
+# Load model
+model = SentenceTransformer("all-MiniLM-L6-v2")
+
+# Create FAISS index (cosine similarity)
+dimension = 384  # embedding size of MiniLM
+index = faiss.IndexFlatIP(dimension)
+
+# Store metadata in Python list
+documents = []
+
+def add_document(text: str):
+    embedding = model.encode([text])
+    embedding = embedding.astype('float32')
+
+    index.add(embedding)
+    documents.append(text)
+
+    return {"status": "added", "id": len(documents)-1}
+
+
+def search(query: str, top_k: int = 3):
+    query_vec = model.encode([query]).astype('float32')
+    scores, ids = index.search(query_vec, top_k)
+
+    results = []
+    for score, doc_id in zip(scores[0], ids[0]):
+        if doc_id != -1:
+            results.append({
+                "id": int(doc_id),
+                "text": documents[doc_id],
+                "score": float(score)
+            })
+
+    return results
+
+
+
